@@ -50,4 +50,8 @@ Cria roles e políticas específicas para:
 - Operações de snapshot
 - Operações de banco de dados
 - Integração com CloudWatch
-- Permissões do EventBridge
+- Permissões do EventBridg
+
+## Mais detalhes
+
+Consulte: https://www.linuxzilla.com.br/2025/10/02/artigos-criando-instancia-rds-postgres-efemero-na-aws-via-terraform/
