@@ -121,12 +121,11 @@ resource "aws_iam_policy" "lambda_policy_rds_functions_logs" {
     "Statement" : [
       {
         "Action" : [
-          "logs:PutResourcePolicy",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        "Resource" : "*"
+        "Resource" : "arn:aws:logs:${var.REGION}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*"
         "Effect" : "Allow"
       }
     ]
@@ -146,8 +145,7 @@ resource "aws_iam_policy" "lambda_policy_rds_db_full_snapshot" {
           "rds:CreateDBSnapshot",
           "rds:DeleteDBSnapshot",
           "rds:DescribeDBSnapshots",
-          "rds:AddTagsToResource",
-          "lambda:*"
+          "rds:AddTagsToResource"
         ],
         "Resource" : [
           data.aws_db_instance.prod_db.db_instance_arn,
@@ -191,8 +189,14 @@ resource "aws_iam_policy" "lambda_policy_rds_rebuilddb" {
     "Statement" : [
       {
         "Action" : [
-          "rds:*",
-          "lambda:*"
+          "rds:CreateDBInstance",
+          "rds:DeleteDBInstance",
+          "rds:DescribeDBInstances",
+          "rds:DescribeDBSnapshots",
+          "rds:ModifyDBInstance",
+          "rds:RestoreDBInstanceFromDBSnapshot",
+          "rds:AddTagsToResource",
+          "rds:ListTagsForResource"
         ],
         Resource : [
           resource.aws_db_instance.ephemeral_database.arn,
