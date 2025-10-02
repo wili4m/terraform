@@ -16,7 +16,7 @@ provider "aws" {
   region = var.REGION
 }
 
-# In this example, we are using S3 and dynamodb to control terraform state
+# Neste exemplo, estamos usando S3 e DynamoDB para controlar o estado do Terraform
 terraform {
   backend "s3" {
     region         = "us-east-1"
@@ -26,7 +26,7 @@ terraform {
   }
 }
 
-# Tags to be used in all resources
+# Tags a serem usadas em todos os recursos
 locals {
   common_tags = {
     Env       = "Ephemeral"
@@ -37,21 +37,21 @@ locals {
 }
 
 #############################################################################
-# Setup DB Ephemeral
+# Configuração do Banco de Dados Efêmero
 #############################################################################
 
-# Get account id:
+# Obtém o ID da conta:
 
 data "aws_caller_identity" "current" {
 }
 
-# Source database:
+# Banco de dados de origem:
 
 data "aws_db_instance" "prod_db" {
   db_instance_identifier = var.production_database_identifier
 }
 
-# Take a Snapshot:
+# Cria um Snapshot:
 
 resource "aws_db_snapshot" "take_me_snapshot" {
   db_instance_identifier = var.production_database_identifier
@@ -59,7 +59,7 @@ resource "aws_db_snapshot" "take_me_snapshot" {
   tags                   = local.common_tags
 }
 
-# Use that snapshot:
+# Usa esse snapshot:
 
 data "aws_db_snapshot" "latest_snapshot" {
   db_instance_identifier = var.production_database_identifier
@@ -67,7 +67,7 @@ data "aws_db_snapshot" "latest_snapshot" {
   depends_on             = [resource.aws_db_snapshot.take_me_snapshot]
 }
 
-# Forces Ephemeral database (re)creation
+# Força a (re)criação do banco de dados Efêmero
 
 resource "aws_db_instance" "ephemeral_database" {
   identifier              = var.ephemeral_database_identifier
@@ -91,10 +91,10 @@ resource "aws_db_instance" "ephemeral_database" {
 }
 
 #############################################################################
-# IAM lambda function
+# Função Lambda do IAM
 #############################################################################
 
-# Role and Policies for snapshot operations:
+# Role e Políticas para operações de snapshot:
 
 resource "aws_iam_role" "lambda_role_rds_db_full_snapshot" {
   name = "lambda-role-rds-db-full-snapshot"
@@ -112,7 +112,7 @@ resource "aws_iam_role" "lambda_role_rds_db_full_snapshot" {
   })
 }
 
-# Policy to integrate lambda function and cloudwatch log groups:
+# Política para integrar função lambda e grupos de log do CloudWatch:
 
 resource "aws_iam_policy" "lambda_policy_rds_functions_logs" {
   name = "lambda-policy-rds-functions-logs"
@@ -134,7 +134,7 @@ resource "aws_iam_policy" "lambda_policy_rds_functions_logs" {
   tags = local.common_tags
 }
 
-# Policy to allow lambda functions to create and remove snapshots:
+# Política para permitir que funções lambda criem e removam snapshots:
 
 resource "aws_iam_policy" "lambda_policy_rds_db_full_snapshot" {
   name = "lambda-policy-rds-db-full-snapshot"
@@ -164,7 +164,7 @@ resource "aws_iam_policy" "lambda_policy_rds_db_full_snapshot" {
   ]
 }
 
-# Role and Policies for Ephemeral database operations:
+# Role e Políticas para operações do banco de dados Efêmero:
 
 resource "aws_iam_role" "lambda_role_rds_rebuilddb" {
   name = "lambda-role-rds-rebuilddb"
@@ -182,7 +182,7 @@ resource "aws_iam_role" "lambda_role_rds_rebuilddb" {
   })
 }
 
-# Policy to allow lambda functions to create and remove Ephemeral database:
+# Política para permitir que funções lambda criem e removam o banco de dados Efêmero:
 
 resource "aws_iam_policy" "lambda_policy_rds_rebuilddb" {
   name = "lambda-policy-rds-rebuilddb"
@@ -209,7 +209,7 @@ resource "aws_iam_policy" "lambda_policy_rds_rebuilddb" {
   ]
 }
 
-# Attaching snapshot policy/role to allow snapshot's lambda functions
+# Anexando política/role de snapshot para permitir funções lambda de snapshot
 
 resource "aws_iam_policy_attachment" "attach_lambda_snapshots" {
   name       = "attach-lambda-snapshots"
@@ -221,7 +221,7 @@ resource "aws_iam_policy_attachment" "attach_lambda_snapshots" {
   ]
 }
 
-# Attaching snapshot policy/role to allow lambda communicate with cloudwatch log groups
+# Anexando política/role de snapshot para permitir que lambda se comunique com grupos de log do CloudWatch
 
 resource "aws_iam_policy_attachment" "attach_lambda_snapshots_logs" {
   name       = "attach-lambda-snapshots-logs"
@@ -233,7 +233,7 @@ resource "aws_iam_policy_attachment" "attach_lambda_snapshots_logs" {
   ]
 }
 
-# Attaching database rebuild policy/role to allow lambda functions
+# Anexando política/role de reconstrução do banco de dados para permitir funções lambda
 
 resource "aws_iam_policy_attachment" "attach_lambda_rebuild_ephemeral" {
   name       = "attach-lambda-rebuild-ephemeral"
@@ -245,7 +245,7 @@ resource "aws_iam_policy_attachment" "attach_lambda_rebuild_ephemeral" {
   ]
 }
 
-# Attaching database policy/role to allow lambda communicate with cloudwatch log groups
+# Anexando política/role do banco de dados para permitir que lambda se comunique com grupos de log do CloudWatch
 
 resource "aws_iam_policy_attachment" "attach_lambda_rebuilddb_logs" {
   name       = "attach-lambda-rebuilddb-logs"
@@ -258,10 +258,10 @@ resource "aws_iam_policy_attachment" "attach_lambda_rebuilddb_logs" {
 }
 
 #############################################################################
-# Lambda Functions
+# Funções Lambda
 #############################################################################
 
-# Creating zip file for lambda function snapshot creation
+# Criando arquivo zip para função lambda de criação de snapshot
 
 data "archive_file" "rdsCreateSrcSnapshot_zip" {
   type        = "zip"
@@ -269,7 +269,7 @@ data "archive_file" "rdsCreateSrcSnapshot_zip" {
   output_path = "./zip_lambda_function/rdsCreateSrcSnapshot.zip"
 }
 
-# Lambda function to snapshot creation:
+# Função Lambda para criação de snapshot:
 
 resource "aws_lambda_function" "lambda_function_rds_create_snapshot" {
   filename         = data.archive_file.rdsCreateSrcSnapshot_zip.output_path
@@ -291,7 +291,7 @@ resource "aws_lambda_function" "lambda_function_rds_create_snapshot" {
   }
 }
 
-# Adding permission to lambda function to snapshot creation:
+# Adicionando permissão à função lambda para criação de snapshot:
 
 resource "aws_lambda_permission" "allow_lambda_function_rds_create_snapshot" {
   statement_id  = "AllowExecutionFromCloudWatch"
@@ -300,7 +300,7 @@ resource "aws_lambda_permission" "allow_lambda_function_rds_create_snapshot" {
   principal     = "logs.amazonaws.com"
 }
 
-# Creating zip file for lambda function snapshot deletion
+# Criando arquivo zip para função lambda de exclusão de snapshot
 
 data "archive_file" "rdsRemoveSrcSnapshot_zip" {
   type        = "zip"
@@ -308,7 +308,7 @@ data "archive_file" "rdsRemoveSrcSnapshot_zip" {
   output_path = "./zip_lambda_function/rdsRemoveSrcSnapshot.zip"
 }
 
-# Lambda function to snapshot deletion:
+# Função Lambda para exclusão de snapshot:
 
 resource "aws_lambda_function" "lambda_function_rds_remove_snapshot" {
   filename         = data.archive_file.rdsRemoveSrcSnapshot_zip.output_path
@@ -328,7 +328,7 @@ resource "aws_lambda_function" "lambda_function_rds_remove_snapshot" {
   }
 }
 
-# Adding permission to lambda function to snapshot deletion:
+# Adicionando permissão à função lambda para exclusão de snapshot:
 
 resource "aws_lambda_permission" "allow_lambda_function_rds_remove_snapshot" {
   statement_id  = "AllowExecutionFromCloudWatch"
@@ -337,7 +337,7 @@ resource "aws_lambda_permission" "allow_lambda_function_rds_remove_snapshot" {
   principal     = "logs.amazonaws.com"
 }
 
-# Creating zip file for lambda function database creation
+# Criando arquivo zip para função lambda de criação de banco de dados
 
 data "archive_file" "rdsCreateDbEphemeral_zip" {
   type        = "zip"
@@ -345,7 +345,7 @@ data "archive_file" "rdsCreateDbEphemeral_zip" {
   output_path = "./zip_lambda_function/rdsCreateDbEphemeral.zip"
 }
 
-# Lambda function to Ephemeral database creation:
+# Função Lambda para criação de banco de dados Efêmero:
 
 resource "aws_lambda_function" "lambda_function_rds_create_ephemeral_db" {
   filename         = data.archive_file.rdsCreateDbEphemeral_zip.output_path
@@ -367,7 +367,7 @@ resource "aws_lambda_function" "lambda_function_rds_create_ephemeral_db" {
   }
 }
 
-# Adding permission to lambda function Ephemeral database creation:
+# Adicionando permissão à função lambda para criação de banco de dados Efêmero:
 
 resource "aws_lambda_permission" "allow_lambda_function_rds_create_ephemeral" {
   statement_id  = "AllowExecutionFromCloudWatch"
@@ -376,7 +376,7 @@ resource "aws_lambda_permission" "allow_lambda_function_rds_create_ephemeral" {
   principal     = "logs.amazonaws.com"
 }
 
-# Creating zip file for lambda function database deletion
+# Criando arquivo zip para função lambda de exclusão de banco de dados
 
 data "archive_file" "rdsRemoveDbEphemeral_zip" {
   type        = "zip"
@@ -384,7 +384,7 @@ data "archive_file" "rdsRemoveDbEphemeral_zip" {
   output_path = "./zip_lambda_function/rdsRemoveDbEphemeral.zip"
 }
 
-# Lambda function to Ephemeral database deletion:
+# Função Lambda para exclusão de banco de dados Efêmero:
 
 resource "aws_lambda_function" "lambda_function_rds_remove_ephemeral_db" {
   filename         = data.archive_file.rdsRemoveDbEphemeral_zip.output_path
@@ -404,7 +404,7 @@ resource "aws_lambda_function" "lambda_function_rds_remove_ephemeral_db" {
   }
 }
 
-# Adding permission to lambda function Ephemeral database deletion:
+# Adicionando permissão à função lambda para exclusão de banco de dados Efêmero:
 
 resource "aws_lambda_permission" "allow_lambda_function_rds_remove_ephemeral" {
   statement_id  = "AllowExecutionFromCloudWatch"
@@ -414,31 +414,31 @@ resource "aws_lambda_permission" "allow_lambda_function_rds_remove_ephemeral" {
 }
 
 ############################################################################
-# Cloudwatch logs:
+# Logs do CloudWatch:
 ############################################################################
 
-# Adding cloudwatch log group create snapshot
+# Adicionando grupo de logs do CloudWatch para criar snapshot
 
 resource "aws_cloudwatch_log_group" "log_group_create_snapshot" {
   name              = "/aws/lambda/${aws_lambda_function.lambda_function_rds_create_snapshot.function_name}"
   retention_in_days = 7
 }
 
-# Adding cloudwatch log group remove snapshot
+# Adicionando grupo de logs do CloudWatch para remover snapshot
 
 resource "aws_cloudwatch_log_group" "log_group_remove_snapshot" {
   name              = "/aws/lambda/${aws_lambda_function.lambda_function_rds_remove_snapshot.function_name}"
   retention_in_days = 7
 }
 
-# Adding cloudwatch log group create ephemeral db
+# Adicionando grupo de logs do CloudWatch para criar banco de dados efêmero
 
 resource "aws_cloudwatch_log_group" "log_group_create_ephemeral_db" {
   name              = "/aws/lambda/${aws_lambda_function.lambda_function_rds_create_ephemeral_db.function_name}"
   retention_in_days = 7
 }
 
-# Adding cloudwatch log group remove ephemeral db
+# Adicionando grupo de logs do CloudWatch para remover banco de dados efêmero
 
 resource "aws_cloudwatch_log_group" "log_group_remove_ephemeral_db" {
   name              = "/aws/lambda/${aws_lambda_function.lambda_function_rds_remove_ephemeral_db.function_name}"
@@ -449,7 +449,7 @@ resource "aws_cloudwatch_log_group" "log_group_remove_ephemeral_db" {
 # IAM Event Bridge
 ############################################################################
 
-# Role and Policies for eventbrige snapshot cronjobs:
+# Role e Políticas para cronjobs de snapshot do EventBridge:
 
 resource "aws_iam_role" "eventbridge_role_snapshot" {
   name = "eventbridge-role-snapshot"
@@ -472,7 +472,7 @@ resource "aws_iam_role" "eventbridge_role_snapshot" {
   })
 }
 
-# Policy for evenbridge cronjobs invoke snapshot lambda function:
+# Política para cronjobs do EventBridge invocarem função lambda de snapshot:
 
 resource "aws_iam_policy" "eventbridge_policy_snapshot" {
   name = "eventbridge-policy-snapshot"
@@ -492,7 +492,7 @@ resource "aws_iam_policy" "eventbridge_policy_snapshot" {
   tags = local.common_tags
 }
 
-# Attaching eventbridge policy/role
+# Anexando política/role do EventBridge
 
 resource "aws_iam_policy_attachment" "attach_eventbridge_snapshots" {
   name       = "attach-eventbridge-snapshots"
@@ -500,7 +500,7 @@ resource "aws_iam_policy_attachment" "attach_eventbridge_snapshots" {
   policy_arn = aws_iam_policy.eventbridge_policy_snapshot.arn
 }
 
-# Role and Policies for eventbrige database rebuild cronjobs:
+# Role e Políticas para cronjobs de reconstrução de banco de dados do EventBridge:
 
 resource "aws_iam_role" "eventbridge_role_rebuild_ephemeraldb" {
   name = "eventbridge-role-rebuild-ephemeraldb"
@@ -523,7 +523,7 @@ resource "aws_iam_role" "eventbridge_role_rebuild_ephemeraldb" {
   })
 }
 
-# Policy for evenbridge cronjobs invoke database rebuild lambda function:
+# Política para cronjobs do EventBridge invocarem função lambda de reconstrução de banco de dados:
 
 resource "aws_iam_policy" "eventbridge_policy_rebuild_ephemeraldb" {
   name = "eventbridge-policy-rebuild-ephemeraldb"
@@ -545,7 +545,7 @@ resource "aws_iam_policy" "eventbridge_policy_rebuild_ephemeraldb" {
   tags = local.common_tags
 }
 
-# Attaching eventbridge policy/role
+# Anexando política/role do EventBridge
 
 resource "aws_iam_policy_attachment" "attach_eventbridge_rebuilddb" {
   name       = "attach-eventbridge-rebuilddbs"
@@ -557,7 +557,7 @@ resource "aws_iam_policy_attachment" "attach_eventbridge_rebuilddb" {
 # Event Bridge: Cronjobs.
 ############################################################################
 
-# Eventbridge cronjob: create snapshot
+# Cronjob do EventBridge: criar snapshot
 
 resource "aws_scheduler_schedule" "rdsCreateSrcSnapshot" {
   name       = "rdsCreateSrcSnapshot"
@@ -573,7 +573,7 @@ resource "aws_scheduler_schedule" "rdsCreateSrcSnapshot" {
   }
 }
 
-# Eventbridge cronjob: create ephemeral database
+# Cronjob do EventBridge: criar banco de dados efêmero
 
 resource "aws_scheduler_schedule" "rdsCreateDbEphemeral" {
   name       = "rdsCreateDbEphemeral"
@@ -589,7 +589,7 @@ resource "aws_scheduler_schedule" "rdsCreateDbEphemeral" {
   }
 }
 
-# Eventbridge cronjob: remove snapshot
+# Cronjob do EventBridge: remover snapshot
 
 resource "aws_scheduler_schedule" "rdsRemoveSrcSnapshot" {
   name       = "rdsRemoveSrcSnapshot"
@@ -605,7 +605,7 @@ resource "aws_scheduler_schedule" "rdsRemoveSrcSnapshot" {
   }
 }
 
-# Eventbridge cronjob: remove ephemeral database
+# Cronjob do EventBridge: remover banco de dados efêmero
 
 resource "aws_scheduler_schedule" "rdsRemoveDbEphemeral" {
   name       = "rdsRemoveDbEphemeral"
